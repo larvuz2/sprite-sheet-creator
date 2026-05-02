@@ -23,6 +23,13 @@ Maintain the character's key features, colors, and identity while converting to 
 
 export async function POST(request: NextRequest) {
   try {
+    if (!process.env.FAL_KEY) {
+      return NextResponse.json(
+        { error: "Server is missing FAL_KEY environment variable" },
+        { status: 500 }
+      );
+    }
+
     const { prompt, imageUrl, imageModel, gptImageQuality } = await request.json();
     const model: ImageModel = imageModel === "gpt-image-2" ? "gpt-image-2" : "nano-banana-pro";
     const quality: GptImageQuality | undefined =
@@ -79,9 +86,10 @@ export async function POST(request: NextRequest) {
     if (error && typeof error === 'object' && 'body' in error) {
       console.error("Error body:", JSON.stringify((error as { body: unknown }).body, null, 2));
     }
-    return NextResponse.json(
-      { error: "Failed to generate character" },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to generate character";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
