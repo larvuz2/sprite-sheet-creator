@@ -69,6 +69,14 @@ npm run dev
 
 4. Open http://localhost:3000
 
+## Deploying on Netlify
+
+1. Push this repository to GitHub.
+2. In Netlify, create a new site from the repository.
+3. Set the environment variable `FAL_KEY` in **Site configuration → Environment variables**.
+4. Keep the default build command (`npm run build`). Netlify reads `netlify.toml` and uses Node 20 automatically.
+5. Deploy and test the full generation flow on the deployed URL.
+
 ## Controls
 
 ### Animation Preview (Step 5)

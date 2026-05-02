@@ -37,6 +37,13 @@ type Step = 1 | 2 | 3 | 4 | 5 | 6;
 type GameMode = "side-scroller" | "isometric";
 type ImageModel = "nano-banana-pro" | "gpt-image-2";
 type GptImageQuality = "low" | "medium" | "high";
+type DebugLogLevel = "info" | "error";
+
+interface DebugLogEntry {
+  timestamp: string;
+  level: DebugLogLevel;
+  message: string;
+}
 
 interface BoundingBox {
   x: number;
@@ -216,6 +223,14 @@ export default function Home() {
 
   // Error handling
   const [error, setError] = useState<string | null>(null);
+  const [debugLogs, setDebugLogs] = useState<DebugLogEntry[]>([]);
+
+  const pushDebugLog = useCallback((level: DebugLogLevel, message: string) => {
+    setDebugLogs((prev) => [
+      ...prev,
+      { timestamp: new Date().toISOString(), level, message },
+    ]);
+  }, []);
 
   // Initialize walk divider positions when grid changes
   useEffect(() => {
@@ -463,6 +478,7 @@ export default function Home() {
 
     setError(null);
     setIsGeneratingCharacter(true);
+    pushDebugLog("info", `generateCharacter started (mode=${characterInputMode}, model=${imageModel})`);
 
     try {
       const requestBody = characterInputMode === "image"
@@ -478,12 +494,17 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to generate character");
+        const details = data && typeof data.error === "string" ? data.error : "";
+        const message = `${details ? `Failed to generate character: ${details}` : "Failed to generate character"} (HTTP ${response.status})`;
+        pushDebugLog("error", message);
+        throw new Error(message);
       }
 
       setCharacterImageUrl(data.imageUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate character");
+      const message = err instanceof Error ? err.message : "Failed to generate character";
+      setError(message);
+      pushDebugLog("error", message);
     } finally {
       setIsGeneratingCharacter(false);
     }
@@ -609,7 +630,11 @@ export default function Home() {
         setIdleSpriteSheetUrl(idleData.imageUrl);
       }
 
-      setCompletedSteps((prev) => new Set([...prev, 1]));
+      setCompletedSteps((prev) => {
+        const next = new Set(prev);
+        next.add(1);
+        return next;
+      });
       setCurrentStep(2);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate sprite sheets");
@@ -756,7 +781,11 @@ export default function Home() {
         setIsoIdleBgUrl(results[7].imageUrl);
       }
 
-      setCompletedSteps((prev) => new Set([...prev, 2]));
+      setCompletedSteps((prev) => {
+      const next = new Set(prev);
+      next.add(2);
+      return next;
+    });
       setCurrentStep(3);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove background");
@@ -1332,12 +1361,21 @@ export default function Home() {
   };
 
   const proceedToFrameExtraction = () => {
-    setCompletedSteps((prev) => new Set([...prev, 3]));
+    setCompletedSteps((prev) => {
+    const next = new Set(prev);
+    next.add(3);
+    return next;
+  });
     setCurrentStep(4);
   };
 
   const proceedToSandbox = () => {
-    setCompletedSteps((prev) => new Set([...prev, 4, 5]));
+    setCompletedSteps((prev) => {
+    const next = new Set(prev);
+    next.add(4);
+    next.add(5);
+    return next;
+  });
     setCurrentStep(6);
   };
 
@@ -2397,7 +2435,11 @@ export default function Home() {
             <button
               className="btn btn-success"
               onClick={() => {
-                setCompletedSteps((prev) => new Set([...prev, 5]));
+                setCompletedSteps((prev) => {
+                  const next = new Set(prev);
+                  next.add(5);
+                  return next;
+                });
                 setCurrentStep(6);
               }}
             >
@@ -2894,6 +2936,34 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      <section
+        style={{
+          marginTop: "1rem",
+          border: "1px solid var(--border)",
+          borderRadius: "0.75rem",
+          padding: "0.75rem",
+          background: "rgba(0,0,0,0.2)",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+          <h3 style={{ margin: 0, fontSize: "0.95rem" }}>Debug Log</h3>
+          <button className="btn btn-secondary" onClick={() => setDebugLogs([])}>Clear</button>
+        </div>
+        {debugLogs.length === 0 ? (
+          <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+            No logs yet. Failed API calls will appear here with HTTP status and server error details.
+          </p>
+        ) : (
+          <div style={{ maxHeight: 200, overflowY: "auto", fontFamily: "monospace", fontSize: "0.78rem" }}>
+            {debugLogs.slice(-25).map((log, idx) => (
+              <div key={`${log.timestamp}-${idx}`} style={{ marginBottom: "0.35rem", color: log.level === "error" ? "#ff9f9f" : "var(--text-secondary)" }}>
+                [{log.timestamp}] {log.level.toUpperCase()}: {log.message}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }
