@@ -609,7 +609,11 @@ export default function Home() {
         setIdleSpriteSheetUrl(idleData.imageUrl);
       }
 
-      setCompletedSteps((prev) => new Set([...prev, 1]));
+      setCompletedSteps((prev) => {
+        const next = new Set(prev);
+        next.add(1);
+        return next;
+      });
       setCurrentStep(2);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate sprite sheets");
@@ -756,7 +760,11 @@ export default function Home() {
         setIsoIdleBgUrl(results[7].imageUrl);
       }
 
-      setCompletedSteps((prev) => new Set([...prev, 2]));
+      setCompletedSteps((prev) => {
+      const next = new Set(prev);
+      next.add(2);
+      return next;
+    });
       setCurrentStep(3);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove background");
@@ -1332,12 +1340,21 @@ export default function Home() {
   };
 
   const proceedToFrameExtraction = () => {
-    setCompletedSteps((prev) => new Set([...prev, 3]));
+    setCompletedSteps((prev) => {
+    const next = new Set(prev);
+    next.add(3);
+    return next;
+  });
     setCurrentStep(4);
   };
 
   const proceedToSandbox = () => {
-    setCompletedSteps((prev) => new Set([...prev, 4, 5]));
+    setCompletedSteps((prev) => {
+    const next = new Set(prev);
+    next.add(4);
+    next.add(5);
+    return next;
+  });
     setCurrentStep(6);
   };
 
@@ -2397,7 +2414,11 @@ export default function Home() {
             <button
               className="btn btn-success"
               onClick={() => {
-                setCompletedSteps((prev) => new Set([...prev, 5]));
+                setCompletedSteps((prev) => {
+                  const next = new Set(prev);
+                  next.add(5);
+                  return next;
+                });
                 setCurrentStep(6);
               }}
             >
